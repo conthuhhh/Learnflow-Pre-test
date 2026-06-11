@@ -67,7 +67,13 @@ export const useQuizStore = create<QuizState>((set, get) => ({
       .select('*')
       .eq('quiz_id', quizId)
       .order('order_index');
-    set({ currentQuestions: data || [], isLoading: false });
+
+    // Parse options từ JSONB string → array nếu cần
+    const questions = (data || []).map((q) => ({
+      ...q,
+      options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
+    }));
+    set({ currentQuestions: questions, isLoading: false });
   },
 
   fetchAttempts: async (userId, quizId) => {
@@ -114,6 +120,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
       .select()
       .single();
     if (error) throw error;
+    // Always parse options back to array
     const q = { ...data, options: typeof data.options === 'string' ? JSON.parse(data.options) : data.options };
     set((s) => ({
       currentQuestions: [...s.currentQuestions, q],

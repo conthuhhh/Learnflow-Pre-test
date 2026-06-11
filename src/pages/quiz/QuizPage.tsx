@@ -15,45 +15,11 @@ import type { Quiz, QuizQuestion, QuizAnswer } from '@/types';
 
 const LABELS = ['A', 'B', 'C', 'D'];
 
-// ─── Timer Hook ───────────────────────────────────────────────────────────────
-function useTimer(limitMinutes: number | null, onExpire: () => void) {
-  const [elapsed, setElapsed] = useState(0);
-  const ref = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    ref.current = setInterval(() => {
-      setElapsed((prev) => {
-        const next = prev + 1;
-        if (limitMinutes && next >= limitMinutes * 60) {
-          clearInterval(ref.current!);
-          onExpire();
-        }
-        return next;
-      });
-    }, 1000);
-    return () => { if (ref.current) clearInterval(ref.current); };
-  }, []);
-
-  const remaining = limitMinutes ? limitMinutes * 60 - elapsed : null;
-  const minutes = remaining !== null ? Math.floor(remaining / 60) : Math.floor(elapsed / 60);
-  const seconds = remaining !== null ? remaining % 60 : elapsed % 60;
-  const isWarning = remaining !== null && remaining <= 60;
-
-  return { elapsed, remaining, minutes, seconds, isWarning };
-}
-
 // ─── Result Screen ────────────────────────────────────────────────────────────
-function ResultScreen({
-  quiz, questions, answers, score, passed, timeSpent, onRetry, courseId,
-}: {
-  quiz: Quiz;
-  questions: QuizQuestion[];
-  answers: QuizAnswer[];
-  score: number;
-  passed: boolean;
-  timeSpent: number;
-  onRetry: () => void;
-  courseId: string;
+function ResultScreen({ quiz, questions, answers, score, passed, timeSpent, onRetry, courseId }: {
+  quiz: Quiz; questions: QuizQuestion[]; answers: QuizAnswer[];
+  score: number; passed: boolean; timeSpent: number;
+  onRetry: () => void; courseId: string;
 }) {
   const [showReview, setShowReview] = useState(false);
   const correct = answers.filter((a) => {
@@ -64,30 +30,17 @@ function ResultScreen({
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4">
       <div className="max-w-lg w-full">
-        {/* Score Card */}
-        <div className={`rounded-3xl p-8 text-center mb-4 ${
-          passed
-            ? 'bg-gradient-to-br from-green-500 to-emerald-600'
-            : 'bg-gradient-to-br from-red-500 to-rose-600'
-        }`}>
+        <div className={`rounded-3xl p-8 text-center mb-4 ${passed ? 'bg-gradient-to-br from-green-500 to-emerald-600' : 'bg-gradient-to-br from-red-500 to-rose-600'}`}>
           <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            {passed
-              ? <Trophy className="h-10 w-10 text-white" />
-              : <XCircle className="h-10 w-10 text-white" />}
+            {passed ? <Trophy className="h-10 w-10 text-white" /> : <XCircle className="h-10 w-10 text-white" />}
           </div>
-          <h2 className="text-3xl font-bold text-white mb-1">
-            {passed ? 'Xuất sắc! 🎉' : 'Chưa đạt 😅'}
-          </h2>
+          <h2 className="text-3xl font-bold text-white mb-1">{passed ? 'Xuất sắc! 🎉' : 'Chưa đạt 😅'}</h2>
           <p className="text-white/80 text-sm mb-6">
             {passed ? 'Bạn đã vượt qua bài kiểm tra' : `Cần đạt ${quiz.pass_score}% để qua`}
           </p>
-
-          {/* Big score */}
           <div className="bg-white/20 rounded-2xl px-6 py-4 inline-block">
             <span className="text-5xl font-bold text-white">{score}%</span>
           </div>
-
-          {/* Stats */}
           <div className="grid grid-cols-3 gap-3 mt-6">
             {[
               { label: 'Đúng', value: `${correct}/${questions.length}` },
@@ -102,7 +55,6 @@ function ResultScreen({
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex gap-3 mb-4">
           <Button variant="outline" className="flex-1" onClick={onRetry}>
             <RotateCcw className="h-4 w-4" /> Làm lại
@@ -112,44 +64,31 @@ function ResultScreen({
           </Link>
         </div>
 
-        {/* Review toggle */}
-        <button
-          onClick={() => setShowReview(!showReview)}
-          className="w-full text-center text-sm text-blue-600 dark:text-blue-400 hover:underline"
-        >
+        <button onClick={() => setShowReview(!showReview)}
+          className="w-full text-center text-sm text-blue-600 dark:text-blue-400 hover:underline mb-4">
           {showReview ? 'Ẩn đáp án' : 'Xem lại đáp án'}
         </button>
 
-        {/* Review */}
         {showReview && (
-          <div className="mt-4 space-y-4">
+          <div className="space-y-4">
             {questions.map((q, idx) => {
               const answer = answers.find((a) => a.question_id === q.id);
               const selected = answer?.selected ?? -1;
               const isCorrect = selected === q.correct_index;
-
               return (
-                <div key={q.id}
-                  className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+                <div key={q.id} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
                   <div className="flex items-start gap-2 mb-3">
-                    {isCorrect
-                      ? <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                      : <XCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />}
+                    {isCorrect ? <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" /> : <XCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />}
                     <p className="font-medium text-gray-900 dark:text-white text-sm">
-                      <span className="text-blue-600 dark:text-blue-400 mr-1">Câu {idx + 1}.</span>
-                      {q.question}
+                      <span className="text-blue-600 dark:text-blue-400 mr-1">Câu {idx + 1}.</span>{q.question}
                     </p>
                   </div>
                   <div className="space-y-1.5 ml-7">
                     {q.options.map((opt, i) => (
-                      <div key={i} className={cn(
-                        'text-xs px-3 py-2 rounded-lg flex items-center gap-2',
-                        i === q.correct_index
-                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                          : i === selected && !isCorrect
-                          ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-                          : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
-                      )}>
+                      <div key={i} className={cn('text-xs px-3 py-2 rounded-lg flex items-center gap-2',
+                        i === q.correct_index ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                        : i === selected && !isCorrect ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                        : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300')}>
                         <span className="font-bold">{LABELS[i]}.</span> {opt}
                         {i === q.correct_index && <span className="ml-auto">✓</span>}
                         {i === selected && !isCorrect && <span className="ml-auto">✗</span>}
@@ -157,8 +96,7 @@ function ResultScreen({
                     ))}
                     {q.explanation && (
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 italic flex items-start gap-1">
-                        <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
-                        {q.explanation}
+                        <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />{q.explanation}
                       </p>
                     )}
                   </div>
@@ -180,16 +118,24 @@ export function QuizPage() {
   const { toast } = useUIStore();
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
-  const questions = currentQuestions; // from store, populated by fetchQuestions
   const [pageLoading, setPageLoading] = useState(true);
   const [started, setStarted] = useState(false);
   const [done, setDone] = useState(false);
-
-  // Answers: question_id → selected index (-1 = unanswered)
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [currentIdx, setCurrentIdx] = useState(0);
   const [result, setResult] = useState<{ score: number; passed: boolean; answers: QuizAnswer[]; timeSpent: number } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Timer state — only runs when started
+  const [elapsed, setElapsed] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const submittingRef = useRef(false);
+
+  // Use ref for questions to avoid stale closure in timer
+  const questionsRef = useRef(currentQuestions);
+  useEffect(() => { questionsRef.current = currentQuestions; }, [currentQuestions]);
+  const answersRef = useRef(answers);
+  useEffect(() => { answersRef.current = answers; }, [answers]);
 
   useEffect(() => {
     if (!quizId || !courseId || !user) return;
@@ -203,57 +149,91 @@ export function QuizPage() {
     })();
   }, [quizId, courseId, user]);
 
+  // Start timer when quiz starts
+  useEffect(() => {
+    if (!started || done) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      return;
+    }
+    setElapsed(0);
+    timerRef.current = setInterval(() => {
+      setElapsed((prev) => {
+        const next = prev + 1;
+        // Check time limit
+        if (quiz?.time_limit_minutes && next >= quiz.time_limit_minutes * 60) {
+          clearInterval(timerRef.current!);
+          if (!submittingRef.current) {
+            toast.warning('Hết giờ! Tự động nộp bài.');
+            doSubmit(next, true);
+          }
+        }
+        return next;
+      });
+    }, 1000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [started, done]);
+
+  const doSubmit = useCallback(async (timeSpent: number, auto = false) => {
+    if (!user || !quiz || submittingRef.current) return;
+    const currentQs = questionsRef.current;
+    const currentAs = answersRef.current;
+
+    if (!auto) {
+      const unanswered = currentQs.filter((q) => currentAs[q.id] === undefined).length;
+      if (unanswered > 0 && !confirm(`Bạn còn ${unanswered} câu chưa trả lời. Nộp bài?`)) return;
+    }
+
+    submittingRef.current = true;
+    setSubmitting(true);
+    if (timerRef.current) clearInterval(timerRef.current);
+
+    try {
+      const finalAnswers: QuizAnswer[] = currentQs.map((q) => ({
+        question_id: q.id,
+        selected: currentAs[q.id] ?? -1,
+      }));
+      const attempt = await submitAttempt(user.id, quiz.id, finalAnswers, currentQs, quiz.pass_score, timeSpent);
+      await fetchAttempts(user.id, quiz.id);
+      setResult({ score: attempt.score, passed: attempt.passed, answers: finalAnswers, timeSpent });
+      setDone(true);
+    } catch {
+      toast.error('Có lỗi khi nộp bài');
+    } finally {
+      submittingRef.current = false;
+      setSubmitting(false);
+    }
+  }, [user, quiz, submitAttempt, fetchAttempts, toast]);
+
   const handleStart = async () => {
     if (!quizId) return;
     await fetchQuestions(quizId);
-    setStarted(true);
     setAnswers({});
     setCurrentIdx(0);
     setDone(false);
     setResult(null);
+    submittingRef.current = false;
+    setStarted(true);
   };
 
-  const handleExpire = useCallback(() => {
-    toast.warning('Hết giờ! Tự động nộp bài.');
-    handleSubmit(true);
-  }, []);
-
-  const { elapsed, minutes, seconds, isWarning } = useTimer(
-    started && !done ? quiz?.time_limit_minutes ?? null : null,
-    handleExpire
-  );
-
-  const handleSelect = (questionId: string, idx: number) => {
-    setAnswers((prev) => ({ ...prev, [questionId]: idx }));
+  const handleRetry = async () => {
+    setStarted(false);
+    setDone(false);
+    setResult(null);
+    setAnswers({});
+    setElapsed(0);
+    await handleStart();
   };
 
-  const handleSubmit = async (auto = false) => {
-    if (!user || !quiz || submitting) return;
-    if (!auto) {
-      const unanswered = questions.filter((q) => answers[q.id] === undefined).length;
-      if (unanswered > 0 && !confirm(`Bạn còn ${unanswered} câu chưa trả lời. Nộp bài?`)) return;
-    }
-
-    setSubmitting(true);
-    try {
-      const finalAnswers: QuizAnswer[] = questions.map((q) => ({
-        question_id: q.id,
-        selected: answers[q.id] ?? -1,
-      }));
-      const attempt = await submitAttempt(
-        user.id, quiz.id, finalAnswers, questions, quiz.pass_score, elapsed
-      );
-      // Reload attempt history
-      await fetchAttempts(user.id, quiz.id);
-      setResult({ score: attempt.score, passed: attempt.passed, answers: finalAnswers, timeSpent: elapsed });
-      setDone(true);
-    } catch { toast.error('Có lỗi khi nộp bài'); }
-    finally { setSubmitting(false); }
-  };
-
+  const questions = currentQuestions;
   const bestAttempt = quizId ? getBestAttempt(quizId) : undefined;
   const answeredCount = Object.keys(answers).length;
   const currentQuestion = questions[currentIdx];
+
+  // Timer display
+  const remaining = quiz?.time_limit_minutes ? quiz.time_limit_minutes * 60 - elapsed : null;
+  const displayMinutes = remaining !== null ? Math.floor(remaining / 60) : Math.floor(elapsed / 60);
+  const displaySeconds = remaining !== null ? remaining % 60 : elapsed % 60;
+  const isWarning = remaining !== null && remaining <= 60;
 
   if (pageLoading) {
     return <div className="flex justify-center items-center min-h-screen"><Spinner size="lg" /></div>;
@@ -270,19 +250,19 @@ export function QuizPage() {
     );
   }
 
-  // ── Result screen ──
+  // Result screen
   if (done && result) {
     return (
       <ResultScreen
         quiz={quiz} questions={questions}
         answers={result.answers} score={result.score}
         passed={result.passed} timeSpent={result.timeSpent}
-        onRetry={handleStart} courseId={courseId!}
+        onRetry={handleRetry} courseId={courseId!}
       />
     );
   }
 
-  // ── Start screen ──
+  // Start screen
   if (!started) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4">
@@ -301,7 +281,6 @@ export function QuizPage() {
               <p className="text-gray-500 dark:text-gray-400 mb-5 text-sm">{quiz.description}</p>
             )}
 
-            {/* Info */}
             <div className="space-y-3 mb-6">
               {[
                 { icon: Flag, label: 'Số câu hỏi', value: `${quiz.questions_count || '?'} câu` },
@@ -317,38 +296,26 @@ export function QuizPage() {
               ))}
             </div>
 
-            {/* Best attempt */}
             {bestAttempt && (
-              <div className={`rounded-xl p-3 mb-4 text-sm ${
-                bestAttempt.passed
-                  ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
-                  : 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400'
-              }`}>
-                <span className="font-medium">Lần cao nhất: {bestAttempt.score}%</span>
-                {' · '}
+              <div className={`rounded-xl p-3 mb-4 text-sm ${bestAttempt.passed ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' : 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400'}`}>
+                <span className="font-medium">Điểm cao nhất: {bestAttempt.score}%</span>{' · '}
                 {bestAttempt.passed ? '✅ Đã qua' : '❌ Chưa qua'}
               </div>
             )}
 
-            {/* Attempt History */}
             {attempts.length > 0 && (
               <div className="mb-6">
                 <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
-                  Lịch sử làm bài ({attempts.length} lần)
+                  Lịch sử ({attempts.length} lần)
                 </p>
                 <div className="space-y-1.5 max-h-36 overflow-y-auto">
                   {attempts.map((a, idx) => (
-                    <div key={a.id}
-                      className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs">
+                    <div key={a.id} className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs">
                       <span className="text-gray-600 dark:text-gray-400">
-                        Lần {attempts.length - idx}
-                        {' · '}
-                        {new Date(a.completed_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        Lần {attempts.length - idx} · {new Date(a.completed_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                       </span>
                       <div className="flex items-center gap-2">
-                        <span className={`font-bold ${a.passed ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
-                          {a.score}%
-                        </span>
+                        <span className={`font-bold ${a.passed ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>{a.score}%</span>
                         <span>{a.passed ? '✅' : '❌'}</span>
                       </div>
                     </div>
@@ -366,7 +333,7 @@ export function QuizPage() {
     );
   }
 
-  // ── Quiz screen ──
+  // Quiz screen
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
       {/* Top bar */}
@@ -374,29 +341,22 @@ export function QuizPage() {
         <div className="max-w-3xl mx-auto flex items-center gap-4">
           <div className="flex-1">
             <p className="font-semibold text-gray-900 dark:text-white text-sm truncate">{quiz.title}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {answeredCount}/{questions.length} đã trả lời
-            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{answeredCount}/{questions.length} đã trả lời</p>
           </div>
 
-          {/* Timer */}
           {quiz.time_limit_minutes && (
-            <div className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold',
-              isWarning
-                ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 animate-pulse'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-            )}>
+            <div className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold',
+              isWarning ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 animate-pulse'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300')}>
               <Clock className="h-4 w-4" />
-              {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+              {String(displayMinutes).padStart(2, '0')}:{String(displaySeconds).padStart(2, '0')}
             </div>
           )}
 
-          <Button size="sm" onClick={() => handleSubmit()} isLoading={submitting}>
+          <Button size="sm" onClick={() => doSubmit(elapsed)} isLoading={submitting}>
             <Flag className="h-4 w-4" /> Nộp bài
           </Button>
         </div>
-        {/* Progress */}
         <div className="max-w-3xl mx-auto mt-2">
           <Progress value={answeredCount} max={questions.length} color="blue" />
         </div>
@@ -404,9 +364,8 @@ export function QuizPage() {
 
       {/* Question */}
       <div className="flex-1 max-w-3xl mx-auto w-full px-4 py-8">
-        {currentQuestion && (
+        {currentQuestion ? (
           <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
-            {/* Question number */}
             <div className="flex items-center gap-3 mb-5">
               <span className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0">
                 {currentIdx + 1}
@@ -416,24 +375,16 @@ export function QuizPage() {
               </p>
             </div>
 
-            {/* Options */}
             <div className="space-y-3">
               {currentQuestion.options.map((opt, i) => {
                 const selected = answers[currentQuestion.id] === i;
                 return (
-                  <button key={i} onClick={() => handleSelect(currentQuestion.id, i)}
-                    className={cn(
-                      'w-full text-left px-4 py-3.5 rounded-xl border-2 transition-all flex items-center gap-3',
-                      selected
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                        : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-750'
-                    )}>
-                    <span className={cn(
-                      'w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0',
-                      selected
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
-                    )}>
+                  <button key={i} onClick={() => setAnswers((prev) => ({ ...prev, [currentQuestion.id]: i }))}
+                    className={cn('w-full text-left px-4 py-3.5 rounded-xl border-2 transition-all flex items-center gap-3',
+                      selected ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600')}>
+                    <span className={cn('w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0',
+                      selected ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400')}>
                       {LABELS[i]}
                     </span>
                     <span className="text-sm">{opt}</span>
@@ -442,25 +393,18 @@ export function QuizPage() {
               })}
             </div>
 
-            {/* Nav buttons */}
             <div className="flex items-center justify-between mt-6 pt-5 border-t border-gray-100 dark:border-gray-800">
-              <Button variant="outline" disabled={currentIdx === 0}
-                onClick={() => setCurrentIdx(currentIdx - 1)}>
+              <Button variant="outline" disabled={currentIdx === 0} onClick={() => setCurrentIdx(currentIdx - 1)}>
                 <ChevronLeft className="h-4 w-4" /> Trước
               </Button>
 
-              {/* Question dots */}
               <div className="flex gap-1.5 flex-wrap justify-center max-w-xs">
                 {questions.map((q, i) => (
                   <button key={q.id} onClick={() => setCurrentIdx(i)}
-                    className={cn(
-                      'w-7 h-7 rounded-lg text-xs font-medium transition-colors',
-                      i === currentIdx
-                        ? 'bg-blue-600 text-white'
-                        : answers[q.id] !== undefined
-                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                    )}>
+                    className={cn('w-7 h-7 rounded-lg text-xs font-medium transition-colors',
+                      i === currentIdx ? 'bg-blue-600 text-white'
+                      : answers[q.id] !== undefined ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700')}>
                     {i + 1}
                   </button>
                 ))}
@@ -471,11 +415,16 @@ export function QuizPage() {
                   Tiếp <ChevronRight className="h-4 w-4" />
                 </Button>
               ) : (
-                <Button onClick={() => handleSubmit()} isLoading={submitting}>
+                <Button onClick={() => doSubmit(elapsed)} isLoading={submitting}>
                   <Flag className="h-4 w-4" /> Nộp bài
                 </Button>
               )}
             </div>
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <Spinner />
+            <p className="text-gray-500 dark:text-gray-400 mt-3">Đang tải câu hỏi...</p>
           </div>
         )}
       </div>
