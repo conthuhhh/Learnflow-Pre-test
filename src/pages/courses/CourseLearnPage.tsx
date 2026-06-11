@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, CheckCircle, Circle, Menu, ArrowLeft, BookOpen, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle, Circle, Menu, ArrowLeft, BookOpen, Clock, ClipboardList } from 'lucide-react';
 import { useCourseStore } from '@/store/courseStore';
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
@@ -21,6 +21,7 @@ export function CourseLearnPage() {
     lessonProgress, markLessonComplete, getCourseProgress
   } = useCourseStore();
   const { fetchQuizzesByCourse } = useQuizStore();
+  const quizzes = useQuizStore(s => s.quizzes);
   const { toast } = useUIStore();
 
   const [course, setCourse] = useState<Course | null>(null);
@@ -166,6 +167,35 @@ export function CourseLearnPage() {
               );
             })}
           </div>
+
+          {/* Quiz Section */}
+          {quizzes.length > 0 && (
+            <div className="px-2 pb-4">
+              <div className="flex items-center gap-2 px-3 py-2 mb-1">
+                <ClipboardList className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                  Kiểm tra
+                </span>
+              </div>
+              {quizzes.map((quiz) => (
+                <Link
+                  key={quiz.id}
+                  to={`/courses/${id}/quiz/${quiz.id}`}
+                  className="flex items-center gap-3 p-3 rounded-xl mb-1 text-gray-700 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:text-orange-700 dark:hover:text-orange-400 transition-colors group"
+                >
+                  <div className="shrink-0">
+                    <ClipboardList className="h-5 w-5 text-orange-400 group-hover:text-orange-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium leading-snug truncate">{quiz.title}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                      {quiz.questions_count || 0} câu · Qua {quiz.pass_score}%
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Toggle button on desktop */}
