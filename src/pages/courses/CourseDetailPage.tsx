@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   BookOpen, Clock, Users, Play, CheckCircle,
-  Lock, ArrowLeft, BarChart2
+  Lock, ArrowLeft, BarChart2, ClipboardList, Target
 } from 'lucide-react';
 import { useCourseStore } from '@/store/courseStore';
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
+import { useQuizStore } from '@/store/quizStore';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Progress } from '@/components/ui/Progress';
@@ -29,6 +30,7 @@ export function CourseDetailPage() {
     lessonProgress, getCourseProgress
   } = useCourseStore();
   const { toast } = useUIStore();
+  const { quizzes, fetchQuizzesByCourse } = useQuizStore();
 
   const [course, setCourse] = useState<Course | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -54,6 +56,8 @@ export function CourseDetailPage() {
         await fetchEnrollments(user.id);
         await fetchLessonProgress(user.id, id);
       }
+      // Load quizzes for this course
+      await fetchQuizzesByCourse(id);
     })();
   }, [id, user]);
 
@@ -197,6 +201,59 @@ export function CourseDetailPage() {
               )}
             </div>
           </div>
+
+          {/* Quiz Section */}
+          {quizzes.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Kiểm tra ({quizzes.length} bài)
+              </h2>
+              <div className="space-y-2">
+                {quizzes.map((quiz) => (
+                  <div
+                    key={quiz.id}
+                    className="flex items-center gap-3 p-4 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-orange-200 dark:hover:border-orange-800 transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-orange-50 dark:bg-orange-900/20">
+                      <ClipboardList className="h-4 w-4 text-orange-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 dark:text-white text-sm truncate">
+                        {quiz.title}
+                      </p>
+                      <div className="flex items-center gap-3 mt-0.5">
+                        <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                          <ClipboardList className="h-3 w-3" />
+                          {quiz.questions_count || 0} câu hỏi
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                          <Target className="h-3 w-3" />
+                          Qua: {quiz.pass_score}%
+                        </span>
+                        {quiz.time_limit_minutes && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {quiz.time_limit_minutes} phút
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {enrolled ? (
+                      <Link to={`/courses/${course.id}/quiz/${quiz.id}`}>
+                        <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white">
+                          <Play className="h-3 w-3" /> Làm bài
+                        </Button>
+                      </Link>
+                    ) : (
+                      <span className="flex items-center gap-1 text-xs text-gray-400">
+                        <Lock className="h-3.5 w-3.5" /> Đăng ký để làm
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Sidebar */}
