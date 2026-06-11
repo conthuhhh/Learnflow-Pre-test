@@ -313,6 +313,5 @@ Flashcard dùng thuật toán **SuperMemo 2** để tối ưu lịch ôn tập:
 
 ## 👥 Tác giả
 
-Dự án được xây dựng như một bài tập lớn môn học.
 
 **Tech Stack:** React · TypeScript · Tailwind CSS · Zustand · Supabase
