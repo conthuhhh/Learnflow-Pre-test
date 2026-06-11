@@ -6,14 +6,16 @@ import type { ReactNode } from 'react';
 interface RoleGuardProps {
   role: UserRole;
   children: ReactNode;
-  /** Where to redirect if role doesn't match. Defaults to /dashboard */
   redirectTo?: string;
 }
 
 export function RoleGuard({ role, children, redirectTo = '/dashboard' }: RoleGuardProps) {
   const { user } = useAuthStore();
 
-  if (user?.role !== role) {
+  // Fallback: nếu role chưa load (undefined/null) → mặc định coi là student
+  const userRole: UserRole = (user?.role as UserRole) || 'student';
+
+  if (userRole !== role) {
     return <Navigate to={redirectTo} replace />;
   }
 

@@ -47,6 +47,15 @@ export const useAuthStore = create<AuthState>()(
               .eq('id', session.user.id)
               .single();
 
+            // Nếu profile không có role (user cũ), tự cập nhật về student
+            if (profile && !profile.role) {
+              await supabase
+                .from('profiles')
+                .update({ role: 'student' })
+                .eq('id', session.user.id);
+              profile.role = 'student';
+            }
+
             set({
               user: buildUser(session.user, profile),
               isInitialized: true,
@@ -137,6 +146,14 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'learnflow-auth',
       partialize: (state) => ({ user: state.user }),
+      // Khi load từ localStorage, đảm bảo role luôn có giá trị
+      merge: (persisted, current) => {
+        const p = persisted as Partial<typeof current>;
+        if (p.user && !p.user.role) {
+          p.user.role = 'student';
+        }
+        return { ...current, ...p };
+      },
     }
   )
 );
