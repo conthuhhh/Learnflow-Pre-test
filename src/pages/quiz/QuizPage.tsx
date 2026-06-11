@@ -176,7 +176,7 @@ function ResultScreen({
 export function QuizPage() {
   const { courseId, quizId } = useParams<{ courseId: string; quizId: string }>();
   const { user } = useAuthStore();
-  const { fetchQuizById, fetchQuestions, submitAttempt, fetchAttempts, getBestAttempt, currentQuestions } = useQuizStore();
+  const { fetchQuizById, fetchQuestions, submitAttempt, fetchAttempts, getBestAttempt, currentQuestions, attempts } = useQuizStore();
   const { toast } = useUIStore();
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
@@ -243,6 +243,8 @@ export function QuizPage() {
       const attempt = await submitAttempt(
         user.id, quiz.id, finalAnswers, questions, quiz.pass_score, elapsed
       );
+      // Reload attempt history
+      await fetchAttempts(user.id, quiz.id);
       setResult({ score: attempt.score, passed: attempt.passed, answers: finalAnswers, timeSpent: elapsed });
       setDone(true);
     } catch { toast.error('Có lỗi khi nộp bài'); }
@@ -317,7 +319,7 @@ export function QuizPage() {
 
             {/* Best attempt */}
             {bestAttempt && (
-              <div className={`rounded-xl p-3 mb-6 text-sm ${
+              <div className={`rounded-xl p-3 mb-4 text-sm ${
                 bestAttempt.passed
                   ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
                   : 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400'
@@ -325,6 +327,33 @@ export function QuizPage() {
                 <span className="font-medium">Lần cao nhất: {bestAttempt.score}%</span>
                 {' · '}
                 {bestAttempt.passed ? '✅ Đã qua' : '❌ Chưa qua'}
+              </div>
+            )}
+
+            {/* Attempt History */}
+            {attempts.length > 0 && (
+              <div className="mb-6">
+                <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
+                  Lịch sử làm bài ({attempts.length} lần)
+                </p>
+                <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                  {attempts.map((a, idx) => (
+                    <div key={a.id}
+                      className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs">
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Lần {attempts.length - idx}
+                        {' · '}
+                        {new Date(a.completed_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`font-bold ${a.passed ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
+                          {a.score}%
+                        </span>
+                        <span>{a.passed ? '✅' : '❌'}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
